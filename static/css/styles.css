@@ -1,0 +1,498 @@
+/* static/css/styles.css */
+
+/* Quitamos márgenes por defecto para aprovechar toda la pantalla */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0B4A85; /* Tu color azul base */
+    overflow: hidden; /* Evita barras de desplazamiento */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Contenedor del lienzo */
+#canvas-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Estilo para el lienzo */
+.canvas-container {
+    background-color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border-radius: 8px; /* Un toque redondeado al lienzo queda muy bien en tablets */
+}
+
+canvas {
+    /* Quitamos el fondo blanco genérico porque ocultaba la capa de dibujo inferior de FabricJS */
+    border-radius: 8px; 
+}
+
+/* =========================================
+   BARRA DE HERRAMIENTAS (GLASSMORPHISM AZULADO)
+   ========================================= */
+.toolbar {
+    position: absolute;
+    /* Posición inicial en la parte inferior central */
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Estética Glassmorphism Azulado */
+    background: rgba(11, 74, 133, 0.7); /* Azul oscuro traslúcido */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    z-index: 1000;
+    /* Evita que el texto o iconos se seleccionen al arrastrar */
+    user-select: none; 
+    touch-action: none; /* Previene scroll nativo al tocar la barra */
+}
+
+/* Zona de arrastre (el 'mango' de la barra) */
+.toolbar-drag-handle {
+    width: 100%;
+    height: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    margin-bottom: 4px;
+}
+
+.toolbar-drag-handle::after {
+    content: '';
+    width: 40px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+}
+
+.toolbar-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Contenedor de los botones */
+.toolbar-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Estilo de los botones */
+.tool-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border-radius: 12px;
+    /* Regla UX: Tamaño mínimo 44dp para targets táctiles */
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+/* Efecto al pasar el ratón (útil si se usa con ratón/pencil) */
+.tool-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Estado activo (cuando la herramienta está seleccionada) */
+.tool-btn.active {
+    background: rgba(255, 255, 255, 0.9); /* Blanco casi sólido para contraste alto */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    color: #0B4A85; /* Cambiamos el color del icono al azul del fondo */
+}
+
+/* =========================================
+   BOTONES CONTEXTUALES FLOTANTES
+   ========================================= */
+.action-btn-floating {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #FFD166; /* Color de acento para destacar */
+    color: #0B4A85;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.2s ease;
+    user-select: none;
+    touch-action: none;
+}
+
+.action-btn-floating:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+/* =========================================
+   FASE 11: PÍLDORA DE GESTIÓN DE FICHEROS
+   ========================================= */
+.file-actions-pill {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(11, 74, 133, 0.85); /* Azul oscuro traslúcido igual que la barra global */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-actions-pill .drag-handle {
+    width: 30px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 3px;
+    margin: 6px auto 2px auto;
+    cursor: grab;
+}
+
+.file-actions-pill .drag-handle:active {
+    cursor: grabbing;
+}
+
+.file-actions-pill .pill-content {
+    display: flex;
+    align-items: center;
+    padding: 6px 16px;
+    gap: 8px;
+}
+
+/* Dropdown para Exportar */
+.dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(11, 74, 133, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 4px;
+    z-index: 1001;
+    min-width: 120px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.dropdown-wrapper:hover .dropdown-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-item {
+    color: white;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* =========================================
+   PANEL CONTEXTUAL DE PERSONALIZACIÓN
+   ========================================= */
+.properties-panel {
+    position: absolute;
+    /* Valores iniciales, se moverá con JS */
+    top: 50px;
+    left: 50px;
+    
+    background: rgba(11, 74, 133, 0.85); /* Azul oscuro traslúcido */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    
+    padding: 12px;
+    z-index: 1000;
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    user-select: none;
+    touch-action: none;
+}
+
+.panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.panel-section label {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Rejilla de colores */
+.color-picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.color-swatch:active {
+    transform: scale(0.85);
+}
+
+.color-swatch.selected {
+    border: 2px solid #FFD166; /* Anillo amarillo brillante si está seleccionado */
+    transform: scale(1.1);
+}
+
+/* Control deslizante de grosor */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #FFD166;
+    cursor: pointer;
+    margin-top: -6px; /* Centrar verticalmente respecto al track */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+/* Botones extra (Eliminar, Nodos, etc.) */
+.extra-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+    justify-content: flex-end; /* Alineados a la derecha o centro, a gusto */
+}
+
+.action-btn-square {
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.action-btn-square:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.action-btn-square:active {
+    transform: scale(0.9);
+}
+
+/* Variante Danger (Eliminar) */
+.btn-danger {
+    background: rgba(217, 4, 41, 0.8);
+}
+
+.btn-danger:hover {
+    background: rgba(217, 4, 41, 1);
+    box-shadow: 0 2px 8px rgba(217, 4, 41, 0.5);
+}
+
+/* =========================================
+   PÍLDORA SUPERIOR DE ACCIONES GLOBALES
+   ========================================= */
+.global-actions-pill {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    
+    background: rgba(11, 74, 133, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 25px; /* Redondez tipo píldora */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    z-index: 1000;
+    user-select: none;
+    touch-action: none;
+    gap: 8px;
+}
+
+.pill-divider {
+    width: 1px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 0 4px;
+}
+
+.action-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.action-btn:active:not(:disabled) {
+    transform: scale(0.9);
+}
+
+.action-btn:disabled {
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+}
+
+/* FASE 10: Viewport Controls */
+.zoom-indicator {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-width: 45px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.zoom-indicator:hover {
+    text-decoration: underline;
+}
+
+.glass-select {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    outline: none;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.glass-select option {
+    background: #0B4A85; /* Azul oscuro para que se lea bien al desplegar */
+    color: white;
+}
+
+.hidden {
+    display: none !important;
+}
+/* FASE 7: Herramientas de Alineación */
+.align-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.align-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.align-btn:hover, .align-btn:active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.filename-display {
+    position: absolute;
+    top: 75px;
+    left: 20px;
+    background: rgba(11, 74, 133, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    pointer-events: none; /* Que no moleste al hacer clic */
+    z-index: 1000;
+}

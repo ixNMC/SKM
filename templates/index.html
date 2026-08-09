@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Schemas Touch - MVP</title>
+    
+    <!-- Incluimos nuestra nueva hoja de estilos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- Incluimos Lucide Icons (Ligeros y muy modernos) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="lienzoSchemas"></canvas>
+    </div>
+
+    <!-- Nuestra Barra de Herramientas Flotante -->
+    <div class="toolbar" id="main-toolbar">
+        <!-- Zona para arrastrar la barra -->
+        <div class="toolbar-drag-handle" id="toolbar-drag"></div>
+        
+        <!-- Botones de herramientas -->
+        <div class="toolbar-buttons">
+            <!-- Modo Selección (Activo por defecto) -->
+            <button class="tool-btn active" data-tool="seleccion" title="Seleccionar">
+                <i data-lucide="mouse-pointer-2"></i>
+            </button>
+            
+            <!-- Modo Mano (Pan) -->
+            <button class="tool-btn" data-tool="mano" title="Mover Lienzo (Pan)">
+                <i data-lucide="hand"></i>
+            </button>
+            
+            <!-- Multiselección Toggle -->
+            <button class="tool-btn" id="btn-multiselect" title="Multiselección (Toggle)">
+                <i data-lucide="plus-square"></i>
+            </button>
+            
+            <!-- Modo Rectángulo -->
+            <button class="tool-btn" data-tool="rectangulo" title="Rectángulo">
+                <i data-lucide="square"></i>
+            </button>
+            
+            <!-- Modo Círculo -->
+            <button class="tool-btn" data-tool="circulo" title="Círculo">
+                <i data-lucide="circle"></i>
+            </button>
+            
+            <!-- Modo Línea -->
+            <button class="tool-btn" data-tool="linea" title="Línea">
+                <i data-lucide="minus"></i>
+            </button>
+            
+            <!-- Modo Elipse -->
+            <button class="tool-btn" data-tool="elipse" title="Elipse">
+                <i data-lucide="circle" style="transform: scaleX(1.4);"></i>
+            </button>
+            
+            <!-- Modo Triángulo -->
+            <button class="tool-btn" data-tool="triangulo" title="Triángulo">
+                <i data-lucide="triangle"></i>
+            </button>
+            
+            <!-- Modo Texto -->
+            <button class="tool-btn" data-tool="texto" title="Texto">
+                <i data-lucide="type"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Píldora Superior: Acciones Globales del Lienzo (Undo/Redo y Viewport) -->
+    <div class="global-actions-pill">
+        <button id="btn-undo" class="action-btn" disabled title="Deshacer">
+            <i data-lucide="undo-2"></i>
+        </button>
+        <button id="btn-redo" class="action-btn" disabled title="Rehacer">
+            <i data-lucide="redo-2"></i>
+        </button>
+        
+        <div class="pill-divider"></div>
+        
+        <!-- FASE 10: Controles de Zoom -->
+        <button id="btn-zoom-out" class="action-btn" title="Alejar (Zoom Out)">
+            <i data-lucide="minus-circle"></i>
+        </button>
+        <div class="zoom-indicator" id="zoom-text" title="Doble clic para restaurar Zoom">100%</div>
+        <button id="btn-zoom-in" class="action-btn" title="Acercar (Zoom In)">
+            <i data-lucide="plus-circle"></i>
+        </button>
+        
+        <div class="pill-divider"></div>
+        
+        <!-- FASE 10: Control de Tamaño de Documento -->
+        <select id="canvas-size-selector" class="glass-select" title="Tamaño del documento">
+            <option value="infinite" selected>Infinito</option>
+            <option value="a4-portrait">A4 Vertical</option>
+            <option value="a4-landscape">A4 Horizontal</option>
+        </select>
+    </div>
+
+    <!-- Indicador de Nombre de Archivo -->
+    <div id="filename-display" class="filename-display">
+        <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
+        <span id="current-filename">esquema.skm</span>
+    </div>
+
+    <!-- Botón contextual para finalizar línea -->
+    <div id="btn-finalizar-linea" class="action-btn-floating hidden">
+        <i data-lucide="check-circle"></i> Finalizar Línea
+    </div>
+
+    <!-- Menú Contextual de Personalización (Flotante) -->
+    <div id="propiedades-panel" class="properties-panel hidden">
+        <div class="toolbar-drag-handle" id="propiedades-drag"></div>
+        <div class="panel-section">
+            <label>Color</label>
+            <div class="color-picker-grid" id="color-grid">
+                <!-- Se llenará dinámicamente con JS -->
+            </div>
+        </div>
+        <div class="panel-section">
+            <label>Grosor de Borde</label>
+            <input type="range" id="grosor-rango" min="1" max="10" value="2">
+        </div>
+        <!-- FASE 7: Panel de Alineación y Distribución -->
+        <div id="panel-alineacion" class="panel-section hidden">
+            <label>Alinear y Distribuir</label>
+            <div class="align-tools-grid">
+                <button class="align-btn" data-align="left" title="Alinear Izquierda"><i data-lucide="align-left"></i></button>
+                <button class="align-btn" data-align="center" title="Centrar H"><i data-lucide="align-center"></i></button>
+                <button class="align-btn" data-align="right" title="Alinear Derecha"><i data-lucide="align-right"></i></button>
+                <button class="align-btn" data-align="dist-h" title="Distribuir H"><i data-lucide="move-horizontal"></i></button>
+                
+                <button class="align-btn" data-align="top" title="Alinear Arriba" style="transform: rotate(90deg);"><i data-lucide="align-left"></i></button>
+                <button class="align-btn" data-align="middle" title="Centrar V" style="transform: rotate(90deg);"><i data-lucide="align-center"></i></button>
+                <button class="align-btn" data-align="bottom" title="Alinear Abajo" style="transform: rotate(90deg);"><i data-lucide="align-right"></i></button>
+                <button class="align-btn" data-align="dist-v" title="Distribuir V"><i data-lucide="move-vertical"></i></button>
+            </div>
+        </div>
+
+        <!-- FASE 9: Panel de Edición de Texto -->
+        <div id="panel-texto" class="panel-section hidden">
+            <label>Texto</label>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <button class="align-btn text-align-btn" data-textalign="left" title="Izquierda"><i data-lucide="align-left"></i></button>
+                <button class="align-btn text-align-btn" data-textalign="center" title="Centro"><i data-lucide="align-center"></i></button>
+                <button class="align-btn text-align-btn" data-textalign="right" title="Derecha"><i data-lucide="align-right"></i></button>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="margin:0; width: 60px;">TAMAÑO</label>
+                <input type="number" id="texto-size" value="20" min="10" max="100" style="width:100%; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.4); border-radius:4px; padding:4px;">
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                <label style="margin:0; width: 60px;">FUENTE</label>
+                <select id="texto-font" style="width:100%; background:rgba(0,0,0,0.8); color:#fff; border:1px solid rgba(255,255,255,0.4); border-radius:4px; padding:4px;">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times</option>
+                    <option value="Courier New">Courier</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botones de acciones extra -->
+        <div class="extra-actions">
+            <button id="btn-toggle-alinear" class="action-btn-square hidden" title="Alinear y Distribuir">
+                <i data-lucide="layout-grid"></i>
+            </button>
+            <button id="btn-multi-nodos" class="action-btn-square hidden" title="Selección Múltiple de Nodos">
+                <i data-lucide="mouse-pointer-2"></i>
+            </button>
+            <button id="btn-bifurcar" class="action-btn-square hidden" title="Bifurcar Línea">
+                <i data-lucide="git-branch"></i>
+            </button>
+            <button id="btn-editar-nodos" class="action-btn-square hidden" title="Editar Nodos">
+                <i data-lucide="network"></i>
+            </button>
+            <button id="btn-borrar-figura" class="action-btn-square btn-danger" title="Eliminar">
+                <i data-lucide="trash-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- FASE 11: Píldora de Gestión de Ficheros (Movible) -->
+    <div class="file-actions-pill" id="file-actions-pill">
+        <div class="drag-handle" id="file-pill-handle"></div>
+        <div class="pill-content">
+            <button id="btn-file-open" class="action-btn" title="Abrir esquema">
+                <i data-lucide="folder-open"></i>
+            </button>
+            <button id="btn-file-save" class="action-btn" title="Guardar">
+                <i data-lucide="save"></i>
+            </button>
+            <button id="btn-file-save-as" class="action-btn" title="Guardar como...">
+                <i data-lucide="download"></i>
+            </button>
+            <div class="pill-divider"></div>
+            <!-- Export dropdown wrapper -->
+            <div class="dropdown-wrapper">
+                <button id="btn-file-export" class="action-btn" title="Exportar">
+                    <i data-lucide="file-output"></i>
+                </button>
+                <div class="dropdown-menu" id="export-dropdown">
+                    <div class="dropdown-item" id="btn-export-png">Exportar PNG</div>
+                    <div class="dropdown-item" id="btn-export-pdf">Exportar PDF</div>
+                </div>
+            </div>
+            <button id="btn-file-print" class="action-btn" title="Imprimir">
+                <i data-lucide="printer"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Inicializamos los iconos de Lucide -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
